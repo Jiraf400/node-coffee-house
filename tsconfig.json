@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2018",
+    "strictPropertyInitialization": false,
     "lib": [
       "ES6"
     ],
@@ -13,6 +14,8 @@
     "removeComments": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "strict": true,
     "noImplicitAny": true,
     "skipLibCheck": true
