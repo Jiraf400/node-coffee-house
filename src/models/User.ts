@@ -16,10 +16,7 @@ export class User {
     @Column({unique: true})
     email: string
 
-    @OneToOne(() => Card, card => card.id, {
-        cascade: true
-    })
+    @OneToOne(() => Card, (card) => card.user, {cascade: true})
     @JoinColumn()
-    card: number
-
+    card: Relation<Card>
 }

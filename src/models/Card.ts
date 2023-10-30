@@ -10,7 +10,6 @@ export class Card {
     @Column()
     balance: number
 
-    @OneToOne(() => User, user => user.id)
-    @JoinColumn()
-    user: number
+    @OneToOne(() => User, (user) => user.card)
+    user: Relation<User>
 }
