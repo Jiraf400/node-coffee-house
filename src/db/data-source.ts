@@ -1,7 +1,7 @@
 import "reflect-metadata"
-import { DataSource } from "typeorm"
-import { User } from '../models/User.js'
 import dotenv from "dotenv";
+import {DataSource} from "typeorm"
+import {User} from '../models/User.js'
 import {Card} from "../models/Card.js";
 
 dotenv.config();
