@@ -21,11 +21,9 @@ export const register = async (req: express.Request, res: express.Response) => {
     console.log(`Send cardNo ${cardNo}`);
     console.log(`Send cardCVV ${cardCVV}`);
 
-    if (!name || !email || !password) return res.status(400).json({ message: 'Username and password are required.' });
-
     const duplicate = await userRepository.findOneBy({ email });
 
-    if (duplicate) return res.sendStatus(409).json({ message: 'User already exists.' });
+    if (duplicate) return res.status(409).json({ message: 'User already exists.' });
 
     const hashedPwd = await bcrypt.hash(password, 10);
 
@@ -49,18 +47,18 @@ export const register = async (req: express.Request, res: express.Response) => {
     res.status(201).json({ success: `New user ${createdUser.name} with id ${createdUser.id} created!` });
   } catch (error) {
     console.log(error);
-    return res.sendStatus(400).json({ message: 'Register error' });
+    return res.status(400).json({ message: 'Register error' });
   }
 };
 
 export const login = async (req: express.Request, res: express.Response) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Username and password are required.' });
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
     const foundUser = await userRepository.findOneBy({ email });
 
-    if (!foundUser) return res.sendStatus(403).json({ error: `User not exists with email ${email}` });
+    if (!foundUser) return res.status(403).json({ error: `User not exists with email ${email}` });
 
     const match = await bcrypt.compare(password, foundUser.password);
     if (match) {
@@ -70,7 +68,7 @@ export const login = async (req: express.Request, res: express.Response) => {
     }
   } catch (error) {
     console.log(error);
-    return res.sendStatus(400);
+    return res.status(400);
   }
 };
 
