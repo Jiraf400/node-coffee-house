@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation, Long } from 'typeorm';
 import { User } from './User.js';
 
 @Entity()
@@ -6,11 +6,11 @@ export class Card {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  cardNumber: number;
+  @Column({ type: 'bigint' })
+  cardNumber: string;
 
   @Column()
-  CVV: number;
+  CVV: string;
 
   @Column()
   balance: number;
