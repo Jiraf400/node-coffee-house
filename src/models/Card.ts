@@ -1,15 +1,20 @@
-import {Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation, JoinColumn} from "typeorm"
-import {User} from "./User.js";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation } from 'typeorm';
+import { User } from './User.js';
 
 @Entity()
 export class Card {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @PrimaryGeneratedColumn()
-    id: number
+  @Column()
+  cardNumber: number;
 
-    @Column()
-    balance: number
+  @Column()
+  CVV: number;
 
-    @OneToOne(() => User, (user) => user.card)
-    user: Relation<User>
+  @Column()
+  balance: number;
+
+  @OneToOne(() => User, (user) => user.card)
+  user: Relation<User>;
 }
