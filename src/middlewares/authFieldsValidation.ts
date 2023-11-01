@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 
-export const validateRegisterFields = (req: Request, res: Response, next: NextFunction) => {
+export const validateAuthenticationFields = (req: Request, res: Response, next: NextFunction) => {
+  if (req.url == '/login') {
+    validateLoginFields(req, res, next);
+    return;
+  }
+
   const { name, email, password, cardNo, cardCVV } = req.body;
 
   if (!name || !email || !password || !cardNo || !cardCVV) {
@@ -21,7 +26,19 @@ export const validateRegisterFields = (req: Request, res: Response, next: NextFu
 
   req.body.name = validateName(name);
 
-  console.log(`register fields are valid for user: ${name}`);
+  console.log(`register fields are valid for user: ${email}`);
+
+  next();
+};
+
+const validateLoginFields = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  console.log(`login fields are valid for user: ${req.body.email}`);
 
   next();
 };
