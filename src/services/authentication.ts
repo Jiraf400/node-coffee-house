@@ -15,12 +15,6 @@ export const register = async (req: express.Request, res: express.Response) => {
   try {
     const { name, email, password, cardNo, cardCVV } = req.body;
 
-    console.log(`Send name ${name}`);
-    console.log(`Send email ${email}`);
-    console.log(`Send password ${password}`);
-    console.log(`Send cardNo ${cardNo}`);
-    console.log(`Send cardCVV ${cardCVV}`);
-
     const duplicate = await userRepository.findOneBy({ email });
 
     if (duplicate) return res.status(409).json({ message: 'User already exists.' });
@@ -30,11 +24,11 @@ export const register = async (req: express.Request, res: express.Response) => {
     const userToCreate = new User();
     userToCreate.name = name;
     userToCreate.password = hashedPwd;
-    userToCreate.email = email; //TODO add validation
+    userToCreate.email = email;
 
     const cardToCreate = new Card();
-    cardToCreate.CVV = cardCVV; //TODO add validation
-    cardToCreate.cardNumber = cardNo; //TODO add validation
+    cardToCreate.CVV = cardCVV;
+    cardToCreate.cardNumber = cardNo;
     cardToCreate.balance = 10000;
     cardToCreate.user = userToCreate;
 
@@ -44,7 +38,7 @@ export const register = async (req: express.Request, res: express.Response) => {
 
     console.log(createdUser);
 
-    res.status(201).json({ success: `New user ${createdUser.name} with id ${createdUser.id} created!` });
+    return res.status(201).json({ success: `New user ${createdUser.name} with id ${createdUser.id} created!` });
   } catch (error) {
     console.log(error);
     return res.status(400).json({ message: 'Register error' });
@@ -54,11 +48,12 @@ export const register = async (req: express.Request, res: express.Response) => {
 export const login = async (req: express.Request, res: express.Response) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
 
     const foundUser = await userRepository.findOneBy({ email });
 
-    if (!foundUser) return res.status(403).json({ error: `User not exists with email ${email}` });
+    if (!foundUser) {
+      return res.status(403).json({ error: `User not exists with email ${email}` });
+    }
 
     const match = await bcrypt.compare(password, foundUser.password);
     if (match) {
