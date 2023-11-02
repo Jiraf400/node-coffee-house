@@ -17,7 +17,13 @@ export const validateJwtToken = (req: Request, res: Response, next: NextFunction
     if (err) {
       return res.status(401).json({ error: 'invalid token' }).end();
     }
+
+    req.body.email = parseJwt(token).email;
   });
 
   next();
 };
+
+function parseJwt(token: string) {
+  return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+}
