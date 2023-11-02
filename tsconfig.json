@@ -16,6 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "strictNullChecks": false,
     "strict": true,
     "noImplicitAny": true,
     "skipLibCheck": true
