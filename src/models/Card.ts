@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation, Long } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation, JoinColumn } from 'typeorm';
 import { User } from './User.js';
 
 @Entity()
@@ -16,5 +16,6 @@ export class Card {
   balance: number;
 
   @OneToOne(() => User, (user) => user.card)
+  @JoinColumn()
   user: Relation<User>;
 }

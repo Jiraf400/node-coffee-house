@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, OneToOne, Relation } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Relation } from 'typeorm';
 import { Card } from './Card.js';
 
 @Entity()
@@ -16,6 +16,5 @@ export class User {
   email: string;
 
   @OneToOne(() => Card, (card) => card.user, { cascade: true })
-  @JoinColumn()
   card: Relation<Card>;
 }
