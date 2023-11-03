@@ -1,4 +1,4 @@
-import { postNewOrder, deleteExistingOrder, getOrderList, updateExistingOrder } from '../services/orderService.js';
+import { postNewOrder, getOrderList, receiveOrder } from '../services/orderService.js';
 import { Request, Response } from 'express';
 
 export const postOrder = (req: Request, res: Response) => {
@@ -14,10 +14,6 @@ export const getAllOrders = (req: Request, res: Response) => {
   return getOrderList(req, res);
 };
 
-export const updateOrder = (req: Request, res: Response) => {
-  return updateExistingOrder(req, res);
-};
-
-export const deleteOrder = (req: Request, res: Response) => {
-  return deleteExistingOrder(req, res);
+export const receiveUsersOrder = (req: Request, res: Response) => {
+  return receiveOrder(req, res);
 };

@@ -26,7 +26,7 @@ export const postNewOrder = async (req: Request, res: Response) => {
   let card = new Card();
 
   if (!userFromDb || !email || !menuItemFromDb) {
-    return res.status(400).json({ error: 'Order creation failed' });
+    return res.status(400).json({ error: 'Order creation failed' }).end();
   } else {
     card = await cardRepository.findOneBy({ user: userFromDb });
   }
@@ -51,14 +51,14 @@ export const postNewOrder = async (req: Request, res: Response) => {
     .end();
 };
 
-export const deleteExistingOrder = (req: Request, res: Response) => {
-  //
-};
+export const getOrderList = async (req: Request, res: Response) => {
+  const { email } = req.body;
 
-export const updateExistingOrder = (req: Request, res: Response) => {
-  //
-};
+  const foundUser = await userRepository.findOneBy({ email: email });
 
-export const getOrderList = (req: Request, res: Response) => {
-  //
+  const userCard = foundUser.card;
+
+  const ordersToGet = await orderRepository.findBy({ cards: userCard });
+
+  return res.status(200).json(ordersToGet).end();
 };
