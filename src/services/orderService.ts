@@ -51,14 +51,66 @@ export const postNewOrder = async (req: Request, res: Response) => {
     .end();
 };
 
+export const receiveOrder = async (req: Request, res: Response) => {
+  const { orderId } = req.body;
+
+  if (!orderId || !isFinite(orderId) || orderId == 0) {
+    return res.status(400).json({ message: `Sorry. Order receiving failed` }).end();
+  }
+
+  const order = await orderRepository
+    .createQueryBuilder('order')
+    .where({ id: orderId })
+    .leftJoinAndSelect('order.cards', 'cards')
+    .getOne();
+
+  const user = await userRepository
+    .createQueryBuilder('user')
+    .where({ card: order.cards[0] })
+    .leftJoinAndSelect('user.card', 'card')
+    .getOne();
+
+  if (user.card.id !== order.cards[0].id) {
+    return res.status(400).json({ message: `Sorry. This order is not yours. You can't take it` }).end();
+  }
+
+  order.status = 'RECEIVED';
+  user.card.balance -= 100;
+
+  await userRepository.save(user);
+  await orderRepository.save(order);
+
+  return res
+    .status(200)
+    .json({ message: `Order with id ${orderId} received. Thanks` })
+    .end();
+};
+
 export const getOrderList = async (req: Request, res: Response) => {
   const { email } = req.body;
 
-  const foundUser = await userRepository.findOneBy({ email: email });
+  if (!email) {
+    return res.status(401).json({ error: 'Get list failed' }).end();
+  }
+
+  const foundUser = await userRepository
+    .createQueryBuilder('user')
+    .where({ email: email })
+    .leftJoinAndSelect('user.card', 'card')
+    .getOne();
 
   const userCard = foundUser.card;
 
-  const ordersToGet = await orderRepository.findBy({ cards: userCard });
+  const allOrders = await orderRepository.find({ relations: ['cards'] });
+
+  const ordersToGet = new Array<Order>();
+
+  allOrders.forEach((order) => {
+    console.log(`Order from forEach loop : ${JSON.stringify(order)}`);
+    if (order.cards[0].id === userCard.id) {
+      ordersToGet.push(order);
+    }
+  });
 
   return res.status(200).json(ordersToGet).end();
 };
