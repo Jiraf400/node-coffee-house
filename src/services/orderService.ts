@@ -4,6 +4,7 @@ import { User } from '../models/User.js';
 import { Order } from '../models/Order.js';
 import { MenuItem } from '../models/Menu-Item.js';
 import { Card } from '../models/Card.js';
+import { OrderDTO } from '../dto/OrderDTO.js';
 
 const dataSource = await AppDataSource.initialize();
 const userRepository = dataSource.getRepository(User);
@@ -89,6 +90,8 @@ export const receiveOrder = async (req: Request, res: Response) => {
 export const getOrderList = async (req: Request, res: Response) => {
   const { email } = req.body;
 
+  const ordersToReturn = new Array<OrderDTO>();
+
   if (!email) {
     return res.status(401).json({ error: 'Get list failed' }).end();
   }
@@ -101,16 +104,21 @@ export const getOrderList = async (req: Request, res: Response) => {
 
   const userCard = foundUser.card;
 
-  const allOrders = await orderRepository.find({ relations: ['cards'] });
-
-  const ordersToGet = new Array<Order>();
+  const allOrders = await orderRepository.find({ relations: ['cards', 'menu_items'] });
 
   allOrders.forEach((order) => {
-    console.log(`Order from forEach loop : ${JSON.stringify(order)}`);
+    console.log(`order object from forEach loop: ${JSON.stringify(order)}`);
+
     if (order.cards[0].id === userCard.id) {
-      ordersToGet.push(order);
+      const newOrderDto = new OrderDTO();
+
+      newOrderDto.status = order.status;
+      newOrderDto.description = order.menu_items[0].description;
+      newOrderDto.image = order.menu_items[0].image;
+
+      ordersToReturn.push(newOrderDto);
     }
   });
 
-  return res.status(200).json(ordersToGet).end();
+  return res.status(200).json(ordersToReturn).end();
 };
