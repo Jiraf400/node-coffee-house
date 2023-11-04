@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { AppDataSource } from '../db/data-source.js';
 import { User } from '../models/User.js';
 import { Card } from '../models/Card.js';
+import BadRequestError from '../errors/BadRequestError.js';
 
 const dataSource = await AppDataSource.initialize();
 const userRepository = dataSource.getRepository(User);
@@ -12,58 +13,53 @@ const userRepository = dataSource.getRepository(User);
 dotenv.config();
 
 export const register = async (req: express.Request, res: express.Response) => {
-  try {
-    const { name, email, password, cardNo, cardCVV } = req.body;
+  const { name, email, password, cardNo, cardCVV } = req.body;
 
-    const duplicate = await userRepository.findOneBy({ email });
+  const duplicate = await userRepository.findOneBy({ email });
 
-    if (duplicate) return res.status(409).json({ message: 'User already exists.' });
-
-    const hashedPwd = await bcrypt.hash(password, 10);
-
-    const userToCreate = new User();
-    userToCreate.name = name;
-    userToCreate.password = hashedPwd;
-    userToCreate.email = email;
-
-    const cardToCreate = new Card();
-    cardToCreate.CVV = cardCVV;
-    cardToCreate.cardNumber = cardNo;
-    cardToCreate.balance = 10000;
-    cardToCreate.user = userToCreate;
-
-    userToCreate.card = cardToCreate;
-
-    const createdUser = await userRepository.save(userToCreate);
-
-    console.log(createdUser);
-
-    return res.status(201).json({ success: `New user ${createdUser.name} with id ${createdUser.id} created!` });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({ message: 'Register error' });
+  if (duplicate) {
+    throw new BadRequestError({ code: 409, message: 'User already exists!', logging: false });
   }
+
+  const hashedPwd = await bcrypt.hash(password, 10);
+
+  const userToCreate = new User();
+  userToCreate.name = name;
+  userToCreate.password = hashedPwd;
+  userToCreate.email = email;
+
+  const cardToCreate = new Card();
+  cardToCreate.CVV = cardCVV;
+  cardToCreate.cardNumber = cardNo;
+  cardToCreate.balance = 10000;
+  cardToCreate.user = userToCreate;
+
+  userToCreate.card = cardToCreate;
+
+  const createdUser = await userRepository.save(userToCreate);
+
+  console.log(createdUser);
+
+  return res.status(201).json({ success: `New user ${createdUser.name} with id ${createdUser.id} created!` });
 };
 
 export const login = async (req: express.Request, res: express.Response) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    const foundUser = await userRepository.findOneBy({ email });
+  const foundUser = await userRepository.findOneBy({ email });
 
-    if (!foundUser) {
-      return res.status(403).json({ error: `User not exists with email ${email}` });
-    }
+  if (!foundUser) {
+    throw new BadRequestError({ code: 403, message: `User not exists with email ${email}!`, logging: false });
+  }
 
-    const match = await bcrypt.compare(password, foundUser.password);
-    if (match) {
-      const accessToken = generateAccessToken(foundUser.id, foundUser.email);
+  const match = await bcrypt.compare(password, foundUser.password);
 
-      res.json({ access_token: accessToken });
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(400);
+  if (match) {
+    const accessToken = generateAccessToken(foundUser.id, foundUser.email);
+
+    return res.status(200).json({ access_token: accessToken });
+  } else {
+    throw new BadRequestError({ code: 418, message: 'Access token signing error.', logging: false });
   }
 };
 

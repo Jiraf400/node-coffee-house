@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import BadRequestError from '../errors/BadRequestError.js';
 
 export const validateAuthenticationFields = (req: Request, res: Response, next: NextFunction) => {
   if (req.url == '/login') {
@@ -9,24 +10,24 @@ export const validateAuthenticationFields = (req: Request, res: Response, next: 
   const { name, email, password, cardNo, cardCVV } = req.body;
 
   if (!name || !email || !password || !cardNo || !cardCVV) {
-    return res.status(400).json({ message: 'All fields are required.' });
+    throw new BadRequestError({ code: 400, message: 'All fields must be filled!', logging: false });
   }
 
   if (!checkIfEmailIsValid(email)) {
-    return res.status(400).json({ error: 'email is incorrect.' });
+    throw new BadRequestError({ code: 400, message: 'Email is incorrect!', logging: false });
   }
 
   if (!checkIfCardNumberValid(cardNo)) {
-    return res.status(400).json({ error: 'card number is incorrect.' });
+    throw new BadRequestError({ code: 400, message: 'Card number is incorrect!', logging: false });
   }
 
   if (!checkIfCardCVVValid(cardCVV)) {
-    return res.status(400).json({ error: 'card cvv is incorrect.' });
+    throw new BadRequestError({ code: 400, message: 'Card cvv is incorrect!', logging: false });
   }
 
   req.body.name = validateName(name);
 
-  console.log(`register fields are valid for user: ${email}`);
+  console.log(`register fields check  for user: ${email}`);
 
   next();
 };
@@ -34,11 +35,15 @@ export const validateAuthenticationFields = (req: Request, res: Response, next: 
 const validateLoginFields = (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required.' });
+  if (!checkIfEmailIsValid(email)) {
+    throw new BadRequestError({ code: 400, message: 'Email is incorrect!', logging: false });
   }
 
-  console.log(`login fields are valid for user: ${req.body.email}`);
+  if (!email || !password) {
+    throw new BadRequestError({ code: 400, message: 'Email and password are required!', logging: false });
+  }
+
+  console.log(`login fields check for user: ${email}`);
 
   next();
 };

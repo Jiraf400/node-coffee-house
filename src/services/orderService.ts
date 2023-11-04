@@ -5,6 +5,7 @@ import { Order } from '../models/Order.js';
 import { MenuItem } from '../models/Menu-Item.js';
 import { Card } from '../models/Card.js';
 import { OrderDTO } from '../dto/OrderDTO.js';
+import BadRequestError from '../errors/BadRequestError.js';
 
 const dataSource = await AppDataSource.initialize();
 const userRepository = dataSource.getRepository(User);
@@ -15,8 +16,8 @@ const menuItemsRepository = dataSource.getRepository(MenuItem);
 export const postNewOrder = async (req: Request, res: Response) => {
   const { email, menu_item_id } = req.body;
 
-  if (!isFinite(menu_item_id)) {
-    return res.status(400).json({ error: 'Incorrect menu item id' });
+  if (!email || !menu_item_id || !isFinite(menu_item_id) || menu_item_id == 0) {
+    throw new BadRequestError({ code: 400, message: 'All fields must be filled!', logging: false });
   }
 
   console.log(`Email: ${email}`);
@@ -24,13 +25,12 @@ export const postNewOrder = async (req: Request, res: Response) => {
 
   const userFromDb = await userRepository.findOneBy({ email: email });
   const menuItemFromDb = await menuItemsRepository.findOneBy({ id: menu_item_id });
-  let card = new Card();
 
-  if (!userFromDb || !email || !menuItemFromDb) {
-    return res.status(400).json({ error: 'Order creation failed' }).end();
-  } else {
-    card = await cardRepository.findOneBy({ user: userFromDb });
+  if (!userFromDb || !menuItemFromDb) {
+    throw new BadRequestError({ code: 400, message: 'Cannot create order with such parameters.', logging: false });
   }
+
+  const card = await cardRepository.findOneBy({ user: userFromDb });
 
   console.log(JSON.stringify(userFromDb));
   console.log();
@@ -46,17 +46,14 @@ export const postNewOrder = async (req: Request, res: Response) => {
 
   console.log(`Order created with id ${createdOrder.id}`);
 
-  return res
-    .status(201)
-    .json({ message: `Order created with id ${createdOrder.id}` })
-    .end();
+  return res.status(201).json({ message: `Order created with id ${createdOrder.id}` });
 };
 
 export const receiveOrder = async (req: Request, res: Response) => {
   const { orderId } = req.body;
 
   if (!orderId || !isFinite(orderId) || orderId == 0) {
-    return res.status(400).json({ message: `Sorry. Order receiving failed` }).end();
+    throw new BadRequestError({ code: 400, message: 'Order receiving failed.', logging: false });
   }
 
   const order = await orderRepository
@@ -71,8 +68,8 @@ export const receiveOrder = async (req: Request, res: Response) => {
     .leftJoinAndSelect('user.card', 'card')
     .getOne();
 
-  if (user.card.id !== order.cards[0].id) {
-    return res.status(400).json({ message: `Sorry. This order is not yours. You can't take it` }).end();
+  if (user !== order.cards[0].user) {
+    throw new BadRequestError({ code: 400, message: 'This order is not yours. You cannot take it.', logging: false });
   }
 
   order.status = 'RECEIVED';
@@ -81,10 +78,7 @@ export const receiveOrder = async (req: Request, res: Response) => {
   await userRepository.save(user);
   await orderRepository.save(order);
 
-  return res
-    .status(200)
-    .json({ message: `Order with id ${orderId} received. Thanks` })
-    .end();
+  return res.status(200).json({ message: `Order with id ${orderId} received. Thanks` });
 };
 
 export const getOrderList = async (req: Request, res: Response) => {
@@ -92,23 +86,21 @@ export const getOrderList = async (req: Request, res: Response) => {
 
   const ordersToReturn = new Array<OrderDTO>();
 
-  if (!email) {
-    return res.status(401).json({ error: 'Get list failed' }).end();
-  }
-
   const foundUser = await userRepository
     .createQueryBuilder('user')
     .where({ email: email })
     .leftJoinAndSelect('user.card', 'card')
     .getOne();
 
+  if (!foundUser) {
+    throw new BadRequestError({ code: 400, message: 'Error getting list.', logging: false });
+  }
+
   const userCard = foundUser.card;
 
   const allOrders = await orderRepository.find({ relations: ['cards', 'menu_items'] });
 
   allOrders.forEach((order) => {
-    console.log(`order object from forEach loop: ${JSON.stringify(order)}`);
-
     if (order.cards[0].id === userCard.id) {
       const newOrderDto = new OrderDTO();
 
@@ -120,5 +112,5 @@ export const getOrderList = async (req: Request, res: Response) => {
     }
   });
 
-  return res.status(200).json(ordersToReturn).end();
+  return res.status(200).json(ordersToReturn);
 };
